@@ -33,21 +33,18 @@ pub fn register_all(
     let state_clone = state.inner().clone();
 
     // Shift+D — toggle drawing
-    let app_toggle = app.clone();
-    register_one(app_toggle, "Shift+D", move || {
-        let _ = app_toggle.emit("toggle_drawing", ());
+    register_one(app.clone(), "Shift+D", |app| {
+        let _ = app.emit("toggle_drawing", ());
     })?;
 
     // Shift+Z — undo
-    let app_undo = app.clone();
-    register_one(app_undo, "Shift+Z", move || {
-        let _ = app_undo.emit("undo_stroke", ());
+    register_one(app.clone(), "Shift+Z", |app| {
+        let _ = app.emit("undo_stroke", ());
     })?;
 
     // Shift+Esc — click through
-    let app_ct = app.clone();
-    register_one(app_ct, "Shift+Escape", move || {
-        let _ = crate::overlay::set_click_through(&app_ct, true);
+    register_one(app.clone(), "Shift+Escape", |app| {
+        let _ = crate::overlay::set_click_through(app, true);
     })?;
 
     // [ and ] — pen width
@@ -132,13 +129,13 @@ pub fn register_all(
 
 fn register_one<F>(app: AppHandle, combo: &str, handler: F) -> Result<(), String>
 where
-    F: Fn() + Send + Sync + 'static,
+    F: Fn(&AppHandle) + Send + Sync + 'static,
 {
     let shortcut: Shortcut = combo.parse().map_err(|e| e.to_string())?;
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
             if event.state == ShortcutState::Pressed {
-                handler();
+                handler(&app);
             }
         })
         .map_err(|e| e.to_string())?;
