@@ -1,7 +1,7 @@
 import { useState } from "react";
-import type { LocalSettings } from "../types";
-import { useLicense } from "../hooks/useLicense";
-import { supabase, API_BASE } from "../lib/supabase";
+import type { LocalSettings } from "../../types";
+import { useLicense } from "../../hooks/useLicense";
+import { supabase, API_BASE } from "../../lib/supabase";
 
 type Tab = "general" | "smoothing" | "account" | "about";
 
@@ -179,7 +179,7 @@ export function SettingsWindow({
 
       {tab === "about" && (
         <div className="settings-section">
-          <p>SmoothPoint v1.0.0</p>
+          <p>SmoothPoint v1.0.1</p>
           <p style={{ fontSize: 12, color: "#64748b", marginTop: 8 }}>
             Rust 기반 초저지연 AI 판서 보정
           </p>
