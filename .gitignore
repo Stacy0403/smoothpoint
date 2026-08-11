@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+web-dashboard/node_modules/
+
+# Build
+dist/
+web-dashboard/.next/
+src-tauri/target/
+
+# Env
+.env
+.env.local
+web-dashboard/.env.local
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Tauri
+src-tauri/gen/
