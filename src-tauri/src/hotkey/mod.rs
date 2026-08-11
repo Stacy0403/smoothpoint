@@ -30,23 +30,23 @@ pub fn register_all(
     let gs = app.global_shortcut();
     let _ = gs.unregister_all();
 
-    let app_handle = app.clone();
     let state_clone = state.inner().clone();
 
     // Shift+D — toggle drawing
-    register_one(&app_handle, "Shift+D", move || {
-        let _ = app_handle.emit("toggle_drawing", ());
+    let app_toggle = app.clone();
+    register_one(app_toggle, "Shift+D", move || {
+        let _ = app_toggle.emit("toggle_drawing", ());
     })?;
 
     // Shift+Z — undo
     let app_undo = app.clone();
-    register_one(&app_undo, "Shift+Z", move || {
+    register_one(app_undo, "Shift+Z", move || {
         let _ = app_undo.emit("undo_stroke", ());
     })?;
 
     // Shift+Esc — click through
     let app_ct = app.clone();
-    register_one(&app_ct, "Shift+Escape", move || {
+    register_one(app_ct, "Shift+Escape", move || {
         let _ = crate::overlay::set_click_through(&app_ct, true);
     })?;
 
@@ -130,11 +130,11 @@ pub fn register_all(
     Ok(())
 }
 
-fn register_one<F>(app: &AppHandle, combo: &str, handler: F) -> Result<(), String>
+fn register_one<F>(app: AppHandle, combo: &str, handler: F) -> Result<(), String>
 where
     F: Fn() + Send + Sync + 'static,
 {
-    let shortcut: Shortcut = combo.parse().map_err(|e: tauri_plugin_global_shortcut::Error| e.to_string())?;
+    let shortcut: Shortcut = combo.parse().map_err(|e| e.to_string())?;
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
             if event.state == ShortcutState::Pressed {
