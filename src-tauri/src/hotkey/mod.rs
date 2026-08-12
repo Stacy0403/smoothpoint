@@ -131,7 +131,9 @@ fn register_one<F>(app: AppHandle, combo: &str, handler: F) -> Result<(), String
 where
     F: Fn(&AppHandle) + Send + Sync + 'static,
 {
-    let shortcut: Shortcut = combo.parse().map_err(|e| e.to_string())?;
+    let shortcut = combo
+        .parse::<Shortcut>()
+        .map_err(|e| e.to_string())?;
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
             if event.state == ShortcutState::Pressed {
