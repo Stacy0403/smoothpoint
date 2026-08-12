@@ -134,10 +134,11 @@ where
     let shortcut = combo
         .parse::<Shortcut>()
         .map_err(|e| e.to_string())?;
+    let app_for_handler = app.clone();
     app.global_shortcut()
         .on_shortcut(shortcut, move |_app, _shortcut, event| {
             if event.state == ShortcutState::Pressed {
-                handler(&app);
+                handler(&app_for_handler);
             }
         })
         .map_err(|e| e.to_string())?;
