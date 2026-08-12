@@ -68,8 +68,15 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Build Tauri app
+      - name: Build Tauri app (Windows)
+        if: matrix.os_name == 'windows'
         run: npm run tauri:build -- ${{ matrix.rust_targets }}
+        env:
+          CI: true
+
+      - name: Build Tauri app bundle (macOS)
+        if: matrix.os_name == 'macos'
+        run: npm run tauri:build -- --bundles app
         env:
           CI: true
 
@@ -77,12 +84,16 @@ jobs:
         if: matrix.os_name == 'macos'
         shell: bash
         run: |
-          APP=$(find src-tauri/target/release/bundle/macos -maxdepth 1 -name "*.app" | head -1)
-          if [ -z "$APP" ]; then echo "App bundle not found"; exit 1; fi
+          APP="src-tauri/target/release/bundle/macos/SmoothPoint.app"
+          if [ ! -d "$APP" ]; then echo "App bundle not found at $APP"; exit 1; fi
           codesign --force --deep --sign - "$APP"
           codesign -vvv "$APP"
-          rm -f src-tauri/target/release/bundle/dmg/*.dmg
-          hdiutil create -volname "SmoothPoint" -srcfolder "$APP" -ov -format UDZO "src-tauri/target/release/bundle/dmg/SmoothPoint.dmg"
+
+      - name: Build macOS DMG
+        if: matrix.os_name == 'macos'
+        run: npm run tauri bundle -- --bundles dmg
+        env:
+          CI: true
 
       - name: Prepare Windows installer (SmoothPoint-setup.exe)
         if: matrix.os_name == 'windows'
