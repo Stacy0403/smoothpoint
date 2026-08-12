@@ -12,9 +12,18 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    tray::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent},
     AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder,
 };
+
+/// Keeps the system tray icon alive for the entire app lifetime.
+struct TrayHolder {
+    #[allow(dead_code)]
+    _tray: TrayIcon,
+}
+
+const DEFAULT_COLOR_PRESETS: [&str; 5] =
+    ["#FF0000", "#0000FF", "#00AA00", "#FF8800", "#000000"];
 
 #[derive(Default)]
 pub struct AppState {
@@ -66,7 +75,7 @@ fn register_hotkeys(
     state: State<'_, Arc<Mutex<AppState>>>,
     color_presets: Vec<String>,
 ) -> Result<(), String> {
-    hotkey::register_all(&app, &state, color_presets)
+    hotkey::register_all(&app, state.inner().clone(), color_presets)
 }
 
 pub fn run() {
@@ -76,12 +85,27 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .manage(Arc::new(Mutex::new(AppState::default())))
         .setup(|app| {
-            setup_tray(app.handle())?;
-            setup_overlay_window(app.handle())?;
+            let tray = setup_tray(app.handle())?;
+            app.manage(TrayHolder { _tray: tray });
 
             if let Some(window) = app.get_webview_window("overlay") {
                 let _ = window.set_ignore_cursor_events(true);
             }
+
+            if let Some(settings) = app.get_webview_window("settings") {
+                let _ = settings.show();
+                let _ = settings.set_focus();
+            }
+
+            let state = app.state::<Arc<Mutex<AppState>>>();
+            hotkey::register_all(
+                app.handle(),
+                state.inner().clone(),
+                DEFAULT_COLOR_PRESETS
+                    .iter()
+                    .map(|c| (*c).to_string())
+                    .collect(),
+            )?;
 
             Ok(())
         })
@@ -113,7 +137,7 @@ fn setup_overlay_window(app: &AppHandle) -> Result<(), Box<dyn std::error::Error
     Ok(())
 }
 
-fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+fn setup_tray(app: &AppHandle) -> Result<TrayIcon, Box<dyn std::error::Error>> {
     let start = MenuItem::with_id(app, "start_drawing", "판서 시작", true, None::<&str>)?;
     let stop = MenuItem::with_id(app, "stop_drawing", "판서 종료", true, None::<&str>)?;
     let click_through =
@@ -127,9 +151,15 @@ fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         &[&start, &stop, &click_through, &settings, &dashboard, &quit],
     )?;
 
-    let _tray = TrayIconBuilder::new()
+    let mut tray_builder = TrayIconBuilder::new()
         .menu(&menu)
-        .tooltip("SmoothPoint")
+        .tooltip("SmoothPoint");
+
+    if let Some(icon) = app.default_window_icon() {
+        tray_builder = tray_builder.icon(icon.clone());
+    }
+
+    let tray = tray_builder
         .on_menu_event(|app, event| match event.id.as_ref() {
             "start_drawing" => {
                 let _ = app.emit("toggle_drawing", ());
@@ -183,5 +213,5 @@ fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         })
         .build(app)?;
 
-    Ok(())
+    Ok(tray)
 }

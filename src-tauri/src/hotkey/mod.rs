@@ -2,7 +2,7 @@ use crate::engine::Point;
 use crate::AppState;
 use parking_lot::Mutex;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 #[derive(Default)]
@@ -14,7 +14,7 @@ pub struct HotkeyState {
 
 pub fn register_all(
     app: &AppHandle,
-    state: &State<'_, Arc<Mutex<AppState>>>,
+    state: Arc<Mutex<AppState>>,
     color_presets: Vec<String>,
 ) -> Result<(), String> {
     {

@@ -73,6 +73,17 @@ jobs:
         env:
           CI: true
 
+      - name: Ad-hoc sign macOS app bundle
+        if: matrix.os_name == 'macos'
+        shell: bash
+        run: |
+          APP=$(find src-tauri/target/release/bundle/macos -maxdepth 1 -name "*.app" | head -1)
+          if [ -z "$APP" ]; then echo "App bundle not found"; exit 1; fi
+          codesign --force --deep --sign - "$APP"
+          codesign -vvv "$APP"
+          rm -f src-tauri/target/release/bundle/dmg/*.dmg
+          hdiutil create -volname "SmoothPoint" -srcfolder "$APP" -ov -format UDZO "src-tauri/target/release/bundle/dmg/SmoothPoint.dmg"
+
       - name: Prepare Windows installer (SmoothPoint-setup.exe)
         if: matrix.os_name == 'windows'
         shell: pwsh
