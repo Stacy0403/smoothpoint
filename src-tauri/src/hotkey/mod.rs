@@ -30,7 +30,7 @@ pub fn register_all(
     let gs = app.global_shortcut();
     let _ = gs.unregister_all();
 
-    let state_clone = state.inner().clone();
+    let state_clone = state.clone();
 
     // Shift+D — toggle drawing
     register_one(app.clone(), "Shift+D", |app| {

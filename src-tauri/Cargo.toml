@@ -1,6 +1,6 @@
 [package]
 name = "smoothpoint"
-version = "1.0.2"
+version = "1.0.3"
 description = "SmoothPoint - AI handwriting smoothing overlay"
 authors = ["SmoothPoint"]
 edition = "2021"
